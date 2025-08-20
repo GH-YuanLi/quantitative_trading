@@ -13,16 +13,24 @@ import pandas as pd
 
 class Data_preprocessing:
     def __init__(self, start_date, end_date):
-        self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.csv")
+        # self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.csv")
+        self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.parquet")
         self.start_date = start_date
         self.end_date = end_date
 
     def load_data(self):
-        df = pd.read_csv(
-            self.data_path,
-            parse_dates=["trade_time"],
-            # low_memory=False
-        )
+        # dataframe to parquet datafile
+        # df = pd.read_csv(
+        #     self.data_path,
+        #     parse_dates=["trade_time"],
+        #     # low_memory=False
+        # )
+        # df['open'] = df['open'].astype(float)
+        # df['close'] = df['close'].astype(float)
+        # df['amount'] = df['amount'].astype(float)
+        # df.to_parquet(os.path.join("./data/", "AG_1min_20100101_20250801.parquet"))
+
+        df = pd.read_parquet(self.data_path, engine="pyarrow")
 
         # 提取需要观测的数据范围
         df = (

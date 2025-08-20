@@ -11,5 +11,4 @@ wheels/
 
 # csv files
 *.csv
-# logs
-*.log
+# log files
