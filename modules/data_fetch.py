@@ -166,6 +166,12 @@ def save_to_csv(data, filename):
         print("\n没有数据需要保存")
 
 
+def save_to_parquet(data, filesname):
+    """保存数据到Parquet文件"""
+    pass
+
+
+
 def main():
     params = {
         "exchange": "SHFE",

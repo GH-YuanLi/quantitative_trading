@@ -6,13 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "dash>=3.2.0",
-    "dash-core-components>=2.0.0",
-    "dash-html-components>=2.0.0",
     "jupyter-dash>=0.4.2",
     "pandas>=2.3.1",
     "plotly>=6.3.0",
     "pyarrow>=21.0.0",
-    "selenium>=4.35.0",
     "tushare>=1.4.23",
 ]
 

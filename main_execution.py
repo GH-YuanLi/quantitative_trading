@@ -94,29 +94,33 @@ logging.info(' - 观测指标：布林线、唐奇安通道、ADX、ATR')
 print('\n数据预处理中...\n')
 data_prep = data_preprocessing.Data_preprocessing(start_time, end_time)
 df = data_prep.load_data()
+logging.info(' - 完成数据加载')
 
 try:
 	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df)
 except Exception:
 	print('⚠ Warning: no trading exists for the date you selected!')
 	sys.exit(1)
+logging.info(' - 完成XXXX')
 
 # 数据补全
 df = data_prep.fill_missing_data(df, dt_all)
+logging.info(' - 完成数据补全')
 
 # 指标计算
 df = quantitative_metrics.cal_metrics(df).add_metrics()
+logging.info(' - 完成指标计算')
 # print(df.info())
 
 
 # 选择可视化的横坐标时间格式
 while True:
-	date_format = input(' - 请选择可视化的时间格式（日期、字符串）：').strip().replace("'", '')
+	date_format = input(' - 请选择可视化的时间格式（date、string）：').strip().replace("'", '')
 	try:
-		assert date_format in ['日期', '字符串'], 'Invalid format name'
-		if date_format == '日期':
+		assert date_format in ['date', 'string'], 'Invalid format name'
+		if date_format == 'date':
 			type = 'date'
-		elif date_format == '字符串':
+		elif date_format == 'string':
 			type = 'category'
 		break
 	except Exception as e:
@@ -125,38 +129,39 @@ while True:
 
 # 可视化
 print('\n数据可视化中...\n')
-data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
+# data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
+data_visualization.dash_time_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)	# 时间搜索栏
 logging.info(' - 完成数据可视化')
 
 
 # 选择是否展示自适应K线图
-while True:
-	flag = input(' - 是否展示自适应K线图 (Y/N)：').strip().replace("'", '')
-	try:
-		assert flag.upper() in ['Y', 'N'], 'Invalid input'
-		if flag.upper() == 'Y':
-			data_visualization.dash_auto_resize(df, dt_obs, dt_breaks, start_time, end_time)
+# while True:
+# 	flag = input(' - 是否展示自适应K线图 (Y/N)：').strip().replace("'", '')
+# 	try:
+# 		assert flag.upper() in ['Y', 'N'], 'Invalid input'
+# 		if flag.upper() == 'Y':
+# 			data_visualization.dash_auto_resize(df, dt_obs, dt_breaks, start_time, end_time)
 
-			# # 设置HTTP服务器
-			# handler = http.server.SimpleHTTPRequestHandler
-			# port = 8050
-			# with socketserver.TCPServer(("", port), handler) as httpd:
-			#     # 自动打开浏览器
-			#     try:
-			#         webbrowser.open(f"http://localhost:{8050}")
-			#         print("✓ 已自动打开浏览器")
-			#     except Exception as e:
-			#         print(f"⚠ 无法自动打开浏览器: {e}")
-			#         print(f"请手动访问: http://localhost:{8050}")
-			#     # 启动服务器
-			#     httpd.serve_forever()
+# 			# # 设置HTTP服务器
+# 			# handler = http.server.SimpleHTTPRequestHandler
+# 			# port = 8050
+# 			# with socketserver.TCPServer(("", port), handler) as httpd:
+# 			#     # 自动打开浏览器
+# 			#     try:
+# 			#         webbrowser.open(f"http://localhost:{8050}")
+# 			#         print("✓ 已自动打开浏览器")
+# 			#     except Exception as e:
+# 			#         print(f"⚠ 无法自动打开浏览器: {e}")
+# 			#         print(f"请手动访问: http://localhost:{8050}")
+# 			#     # 启动服务器
+# 			#     httpd.serve_forever()
 
-		elif flag.upper() == 'N':
-			break
+# 		elif flag.upper() == 'N':
+# 			break
 
-	except Exception as e:
-		print(e, end='. ')
-		print('Please try again')
+# 	except Exception as e:
+# 		print(e, end='. ')
+# 		print('Please try again')
 
 logging.info(' - 完成自适应可视化K线图展示')
 # dash_auto_resize(df, dt_obs, dt_breaks, obs_year, obs_month)

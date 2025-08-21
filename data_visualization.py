@@ -184,7 +184,7 @@ def html_subplot(
 
 	# update layour
 	fig.update_layout(
-		title=f'AG {start_time.strftime("%Y%m%d")} ~ {end_time.strftime("%Y%m%d")} 夜盘 21:00-01:00 交互式回放',
+		title=f'AG {start_time.strftime("%Y%m%d")} ~ {end_time.strftime("%Y%m%d")} 夜盘 21:00-01:00 交互式回放.html',
 		# xaxis=dict(
 		# rangeslider=dict(visible=True),  # Optional: adds zoom slider if needed?
 		#     # rangebreaks=[        # 定义需要跳过的范围 (Define ranges to skip)
@@ -234,7 +234,7 @@ def html_subplot(
 	)
 	# fig.update_xaxes(rangeslider=dict(visible=True), rangeslider_thickness=0.03, row=3, col=1)
 	fig.update_yaxes(
-		title='ADX',
+		title='ATR & ADX',
 		secondary_y=False,
 		# range=[df[['ADX', 'ATR']].min().min() - (df[['ADX', 'ATR']].max().max() - df[['ADX', 'ATR']].min().min()) * 0.1, df[['ADX', 'ATR']].max().max() + (df[['ADX', 'ATR']].max().max() - df[['ADX', 'ATR']].min().min()) * .1],
 		row=1,
@@ -287,7 +287,7 @@ def dash_time_range_filter(
 	end_time,
 	type: str = 'date',
 ):
-	def _build_fig(df_slice: pd.DataFrame, rb_values=None) -> go.Figure:
+	def _build_fig(df_slice: pd.DataFrame) -> go.Figure:
 		# fig = make_subplots(
 		# 	rows=1,
 		# 	cols=1,
@@ -354,7 +354,7 @@ def dash_time_range_filter(
 		# 5.4 ADX
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['ADX'], line=dict(color='orange'), name='ADX(10)', # yaxis="y",
+				x=df.trade_time, y=df['ADX'], line=dict(color='orange'), name='ADX(10)', # yaxis="y",
 			),
 			secondary_y=False,
 			row=1, col=1,
@@ -363,7 +363,7 @@ def dash_time_range_filter(
 		# 5.5 ATR
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['ATR'], line=dict(color='purple'), name='ATR(10)', # yaxis="y2",
+				x=df.trade_time, y=df['ATR'], line=dict(color='purple'), name='ATR(10)', # yaxis="y2",
 			),
 			secondary_y=True,
 			row=1, col=1,
@@ -378,39 +378,28 @@ def dash_time_range_filter(
 		#                          marker=dict(color=colors[t], opacity = 0.6)),
 		#                          row=2, col=1)
 		fig.add_trace(
-			go.Bar(
-				x=df_slice.trade_time,
-				y=df_slice['volume'],
-				name='Volume',
-				opacity=0.9,
+			go.Bar(x=df.trade_time, y=df['volume'], name='Volume', opacity=0.9,
 				marker=dict(
-					color=df_slice['flag_increase'].map(colors),
-					line=dict(color=df_slice['flag_increase'].map(colors), width=0.1),
+					color=df['flag_increase'].map(colors),
+					line=dict(color=df['flag_increase'].map(colors), width=0.1),
 				),
 				showlegend=False,
 			),
 			row=2, col=1,
 		)
 
-		# 根据切片设置标题的日期范围
-		_slice_start = pd.to_datetime(df_slice['trade_time'].iloc[0]) if len(df_slice) else pd.to_datetime(start_time)
-		_slice_end = pd.to_datetime(df_slice['trade_time'].iloc[-1]) if len(df_slice) else pd.to_datetime(end_time)
 		fig.update_layout(
-			# title=f"AG {_slice_start.strftime('%Y%m%d')} ~ {_slice_end.strftime('%Y%m%d')} 时间范围回放",
-			title=f"<b>AG {_slice_start.strftime("%Y%m%d")} ~ {_slice_end.strftime("%Y%m%d")} 夜盘交互式回放</b>",
+			title=f"AG {pd.to_datetime(start_time).strftime('%Y%m%d')} ~ {pd.to_datetime(end_time).strftime('%Y%m%d')} 时间范围回放",
 			width=2000,
-			height=1000,
+			height=800,
 			hovermode='x unified',
 			dragmode='pan',
 		)
 		fig.update_xaxes(
-			rangeslider=dict(visible=False),
-			rangebreaks=[dict(values=(rb_values if rb_values is not None else dt_breaks), dvalue=60 * 1000)],
+			# rangeslider=dict(visible=True),
+			rangebreaks=[dict(values=dt_breaks, dvalue=60 * 1000)],
 			type=type,
 		)
-		fig.update_yaxes(title='ADX', secondary_y=False, row=1, col=1)
-		fig.update_yaxes(title='ATR', secondary_y=True, row=1, col=1)
-		fig.update_yaxes(title='成交量', row=2, col=1)
 		fig.update_yaxes(title='价格', row=3, col=1)
 		return fig
 
@@ -429,10 +418,10 @@ def dash_time_range_filter(
 			html.Div(
 				[
 					# 根据时间范围筛选
-					html.Label('选择开始时间', style={'margin-left': '100px'}),
-					dcc.Input(id='start-time', type='text', value=start_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '150px'}),
-					html.Label('选择结束时间', style={'margin-left': '10px'}),
-					dcc.Input(id='end-time', type='text', value=end_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '150px'}),
+					html.Label('开始时间'),
+					dcc.Input(id='start-time', type='text', value=start_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '240px'}),
+					html.Label('结束时间', style={'margin-left': '12px'}),
+					dcc.Input(id='end-time', type='text', value=end_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '240px'}),
 					# 根据时间节点筛选
 					# html.Label('观测时间'),
 					# dcc.Input(id='observe-time', type='text', value=end_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '240px'}),
@@ -458,13 +447,11 @@ def dash_time_range_filter(
 			end_v = end_value or end_default
 			# 截取范围
 			df_slice = df[(df['trade_time'] >= start_v) & (df['trade_time'] <= end_v)]
-			# 将缺失时间限定到当前输入范围，避免无关的断点
-			local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
 			if len(df_slice) == 0:
-				return _build_fig(df_init, rb_values=dt_breaks)
-			return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+				return _build_fig(df_init)
+			return _build_fig(df_slice)
 		except Exception:
-			return _build_fig(df_init, rb_values=dt_breaks)
+			return _build_fig(df_init)
 
 	webbrowser.open_new('http://localhost:8051/')
 	print(' ✓ 将自动打开浏览器')
@@ -555,7 +542,7 @@ def dash_auto_resize(
 	)
 
 	fig.update_layout(
-		title=f'<b>AG {start_time.strftime("%Y%m%d")} ~ {end_time.strftime("%Y%m%d")} 夜盘 21:00-01:00 交互式回放</b>',
+		title=f'AG {start_time.strftime("%Y%m%d")} ~ {end_time.strftime("%Y%m%d")} 夜盘 21:00-01:00 交互式回放.html',
 		width=2000,
 		height=1000,
 		hovermode='x unified',
@@ -655,4 +642,4 @@ if __name__ == '__main__':
 	# html_subplot(df, dt_obs, dt_breaks, start_time, end_time)
 	# dash_auto_resize(df, dt_obs, dt_breaks, start_time, end_time)
 	# 使用时间范围搜索栏的交互式版本：
-	# dash_time_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type='date')
+	# dash_time_range_filter(df, dt_breaks, start_time, end_time, type='date')
