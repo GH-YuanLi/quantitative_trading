@@ -1,0 +1,21 @@
+2025-08-22 20:02:26 - INFO - MISSION START... ...
+2025-08-22 20:02:33 - INFO -  - 观测时间范围：2025-01-01 00:00:00 ~ 2025-01-07 00:00:00
+2025-08-22 20:02:33 - INFO -  - 观测指标：布林线、唐奇安通道、ADX、ATR
+2025-08-22 20:02:34 - INFO -  - 完成数据加载
+2025-08-22 20:02:34 - INFO -  - 完成XXXX
+2025-08-22 20:02:34 - INFO -  - 完成数据补全
+2025-08-22 20:02:34 - INFO -  - 完成指标计算
+2025-08-22 20:02:34 - INFO -  - 完成规则触发打标表可视化
+2025-08-22 20:03:21 - INFO - Dash is running on http://127.0.0.1:8051/
+
+2025-08-22 20:03:21 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8051
+2025-08-22 20:03:21 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-22 20:03:21 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:21] "GET / HTTP/1.1" 200 -
+2025-08-22 20:03:22 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:22] "GET /_dash-layout HTTP/1.1" 200 -
+2025-08-22 20:03:22 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:22] "GET /_dash-dependencies HTTP/1.1" 200 -
+2025-08-22 20:03:22 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:22] "[36mGET /_dash-component-suites/dash/dcc/async-graph.js HTTP/1.1[0m" 304 -
+2025-08-22 20:03:22 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:22] "[36mGET /_dash-component-suites/plotly/package_data/plotly.min.js HTTP/1.1[0m" 304 -
+2025-08-22 20:03:22 - INFO - 127.0.0.1 - - [22/Aug/2025 20:03:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-08-22 20:06:44 - INFO -  - 完成数据可视化
+2025-08-22 20:06:44 - INFO -  - 完成自适应可视化K线图展示

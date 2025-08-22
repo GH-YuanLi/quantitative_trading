@@ -12,7 +12,8 @@ wheels/
 # Excel files
 *.csv
 *.xls
+*.xlsx
 # log files
-*.log
+# *.log
 # html files
 *.html
