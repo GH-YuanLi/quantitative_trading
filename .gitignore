@@ -9,9 +9,10 @@ wheels/
 # Virtual environments
 .venv
 
-# csv files
+# Excel files
 *.csv
+*.xls
 # log files
-# *.log
+*.log
 # html files
-# *.html
+*.html

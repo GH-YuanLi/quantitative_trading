@@ -15,7 +15,7 @@ import warnings
 
 import pandas as pd
 
-from modules import data_preprocessing, data_visualization, quantitative_metrics
+from modules import data_preprocessing, data_visualization, quantitative_metrics, trigger_rule
 
 # import os
 from utils import utils
@@ -112,6 +112,17 @@ df = quantitative_metrics.cal_metrics(df).add_metrics()
 logging.info(' - 完成指标计算')
 # print(df.info())
 
+# 触发规则标注
+df = trigger_rule.rule_1(df)
+df = trigger_rule.rule_3(df)
+# print(df[df.label_1.notnull()])
+# print(df[df.label_3.notnull()])
+labels = ['label_1', 'label_3']
+df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
+data_visualization.table_show(df, dt_obs, start_time, end_time, labels = labels)
+print(" - 完成规则触发打标")
+logging.info(' - 完成规则触发打标')
+
 
 # 选择可视化的横坐标时间格式
 while True:
@@ -129,8 +140,12 @@ while True:
 
 # 可视化
 print('\n数据可视化中...\n')
+# ① 无其他功能
 # data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
-data_visualization.dash_time_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)	# 时间搜索栏
+# ② 添加时间搜索栏，通过时间按范围搜索
+# data_visualization.dash_time_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)
+# ③ 添加时间搜索栏，通过时间点搜索
+data_visualization.dash_time_point_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)
 logging.info(' - 完成数据可视化')
 
 

@@ -1,6 +1,7 @@
 import http.server
 import os
 import socketserver
+import subprocess
 import webbrowser
 
 import pandas as pd
@@ -279,6 +280,199 @@ def html_subplot(
 
 
 # 交互式：添加时间范围搜索栏，按输入的时间范围截取趋势
+def dash_time_point_range_filter(
+	df: pd.DataFrame,
+	dt_obs: list,
+	dt_breaks: list,
+	start_time,
+	end_time,
+	type: str = 'date',
+):
+	def _build_fig(df_slice: pd.DataFrame, rb_values=None) -> go.Figure:
+		# fig = make_subplots(
+		# 	rows=1,
+		# 	cols=1,
+		# 	shared_xaxes=True,
+		# )
+
+		fig = make_subplots(
+			rows=4,
+			cols=1,  # 5*2的图形
+			shared_xaxes=True,
+			specs=[
+				[{'secondary_y': True}],
+				[{}],
+				[{'rowspan': 2}],
+				[None],
+			],  # 5*1；5*2)
+		)
+
+		# K线
+		fig.add_trace(
+			go.Candlestick(
+				x=df_slice.trade_time,
+				open=df_slice['open'],
+				high=df_slice['high'],
+				low=df_slice['low'],
+				close=df_slice['close'],
+				name='K线',
+				increasing=dict(line=dict(color='red')),
+				decreasing=dict(line=dict(color='green')),
+			),
+			row=3,
+			col=1,
+		)
+
+		# 布林带
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['boll_UB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Upper'),
+			row=3, col=1,
+		)
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['boll_LB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Lower'),
+			row=3, col=1,
+		)
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['boll_MB'], line=dict(color='blue', width=1), name='Boll Mid'),
+			row=3, col=1,
+		)
+
+		# Donchian
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['DC_Upper'], line=dict(color='gray', dash='dot'), name='Don High'),
+			row=3, col=1,
+		)
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['DC_Lower'], line=dict(color='gray', dash='dot'), name='Don Low'),
+			row=3, col=1,
+		)
+		fig.add_trace(
+			go.Scatter(x=df_slice.trade_time, y=df_slice['DC_Middle'], line=dict(color='gray', dash='dot'), name='Don Mid'),
+			row=3, col=1,
+		)
+
+
+		# 5.4 ADX
+		fig.add_trace(
+			go.Scatter(
+				x=df_slice.trade_time, y=df_slice['ADX'], line=dict(color='orange'), name='ADX(10)', # yaxis="y",
+			),
+			secondary_y=False,
+			row=1, col=1,
+		)
+
+		# 5.5 ATR
+		fig.add_trace(
+			go.Scatter(
+				x=df_slice.trade_time, y=df_slice['ATR'], line=dict(color='purple'), name='ATR(10)', # yaxis="y2",
+			),
+			secondary_y=True,
+			row=1, col=1,
+		)
+
+		# 5.6 volume
+		colors = {True: 'red', False: 'green'}
+
+		# for t in df['flag_increase'].unique():
+		#     dfp = df[df['flag_increase']==t]
+		#     fig.add_trace(go.Bar(x=dfp.index, y = dfp['volume'],
+		#                          marker=dict(color=colors[t], opacity = 0.6)),
+		#                          row=2, col=1)
+		fig.add_trace(
+			go.Bar(
+				x=df_slice.trade_time,
+				y=df_slice['volume'],
+				name='Volume',
+				opacity=0.9,
+				marker=dict(
+					color=df_slice['flag_increase'].map(colors),
+					line=dict(color=df_slice['flag_increase'].map(colors), width=0.1),
+				),
+				showlegend=False,
+			),
+			row=2, col=1,
+		)
+
+		# 根据切片设置标题的日期范围
+		_slice_start = pd.to_datetime(df_slice['trade_time'].iloc[0]) if len(df_slice) else pd.to_datetime(start_time)
+		_slice_end = pd.to_datetime(df_slice['trade_time'].iloc[-1]) if len(df_slice) else pd.to_datetime(end_time)
+		fig.update_layout(
+			# title=f"AG {_slice_start.strftime('%Y%m%d')} ~ {_slice_end.strftime('%Y%m%d')} 时间范围回放",
+			title=f"<b>AG {_slice_start.strftime("%Y%m%d")} ~ {_slice_end.strftime("%Y%m%d")} 夜盘交互式回放</b>",
+			width=2000,
+			height=1000,
+			hovermode='x unified',
+			dragmode='pan',
+		)
+		fig.update_xaxes(
+			rangeslider=dict(visible=False),
+			rangebreaks=[dict(values=(rb_values if rb_values is not None else dt_breaks), dvalue=60 * 1000)],
+			type=type,
+		)
+		fig.update_yaxes(title='ADX', secondary_y=False, row=1, col=1)
+		fig.update_yaxes(title='ATR', secondary_y=True, row=1, col=1)
+		fig.update_yaxes(title='成交量', row=2, col=1)
+		fig.update_yaxes(title='价格', row=3, col=1)
+		return fig
+
+	# 默认时间范围：使用数据中的最小/最大 trade_time
+	df = df.reindex(dt_obs)
+	start_default = str(min(df['trade_time']))
+	end_default = str(max(df['trade_time']))
+
+	# 初始子集
+	df_init = df[(df['trade_time'] >= start_default) & (df['trade_time'] <= end_default)]
+	fig = _build_fig(df_init)
+
+	app = JupyterDash(__name__)
+	app.layout = html.Div(
+		[
+			html.Div(
+				[
+					# 根据时间节点筛选
+					html.Label('观测时间', style={'margin-left': '100px'}),
+					dcc.Input(id='observe-time', type='text', value=None, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '150px'}),
+					html.Button('Apply', id='apply-range', n_clicks=0, style={'margin-left': '12px'}),
+				],
+				style={'display': 'flex', 'align-items': 'center', 'gap': '6px', 'margin': '8px 0'}
+			),
+			dcc.Graph(id='dashFig', figure=fig),
+		],
+		style={'font-family': 'Arial', 'font-size': '0.9em'}
+	)
+
+	@app.callback(
+		Output('dashFig', 'figure'),
+		Input('apply-range', 'n_clicks'),
+		State('observe-time', 'value')	  # 观测时间
+	)
+
+	def _apply_range(n_clicks, obs_value):
+		try:
+			# 获取观测时间前后20min的时间范围：若输入为空，使用默认
+			start_obs_v = str(pd.to_datetime(obs_value) - pd.Timedelta(minutes=20))
+			end_obs_v = str(pd.to_datetime(obs_value) + pd.Timedelta(minutes=20))
+			start_v = start_obs_v or start_default
+			end_v = end_obs_v or end_default
+			# 截取范围
+			df_slice = df[(df['trade_time'] >= start_v) & (df['trade_time'] <= end_v)]
+			# 将缺失时间限定到当前输入范围，避免无关的断点
+			local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
+
+			if len(df_slice) == 0:
+				return _build_fig(df_init, rb_values=dt_breaks)
+			return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+		except Exception:
+			return _build_fig(df_init, rb_values=dt_breaks)
+
+	webbrowser.open_new('http://localhost:8051/')
+	print(' ✓ 将自动打开浏览器')
+	app.run(port=8051)
+
+
+
+
+# 交互式：添加时间范围搜索栏，按输入的时间节点前后20分钟的观测时间范围
 def dash_time_range_filter(
 	df: pd.DataFrame,
 	dt_obs: list,
@@ -428,14 +622,11 @@ def dash_time_range_filter(
 		[
 			html.Div(
 				[
-					# 根据时间范围筛选
+					# 根据明确额时间范围筛选
 					html.Label('选择开始时间', style={'margin-left': '100px'}),
 					dcc.Input(id='start-time', type='text', value=start_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '150px'}),
 					html.Label('选择结束时间', style={'margin-left': '10px'}),
 					dcc.Input(id='end-time', type='text', value=end_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '150px'}),
-					# 根据时间节点筛选
-					# html.Label('观测时间'),
-					# dcc.Input(id='observe-time', type='text', value=end_default, placeholder='YYYY-MM-DD HH:MM:SS', style={'width': '240px'}),
 					html.Button('Apply', id='apply-range', n_clicks=0, style={'margin-left': '12px'}),
 				],
 				style={'display': 'flex', 'align-items': 'center', 'gap': '6px', 'margin': '8px 0'}
@@ -448,8 +639,8 @@ def dash_time_range_filter(
 	@app.callback(
 		Output('dashFig', 'figure'),
 		Input('apply-range', 'n_clicks'),
-		State('start-time', 'value'),
-		State('end-time', 'value'),
+		State('start-time', 'value'),     # 开始时间
+		State('end-time', 'value'),       # 终止时间
 	)
 	def _apply_range(n_clicks, start_value, end_value):
 		try:
@@ -469,6 +660,7 @@ def dash_time_range_filter(
 	webbrowser.open_new('http://localhost:8051/')
 	print(' ✓ 将自动打开浏览器')
 	app.run(port=8051)
+
 
 
 
@@ -633,6 +825,70 @@ def dash_auto_resize(
 	print(' ✓ 将自动打开浏览器')
 	app.run(port=8050)
 	# app.run()
+
+
+
+# 表格展示
+def table_show(
+		df: pd.DataFrame,
+		dt_obs,
+		start_time,
+		end_time,
+		labels: list = ['label_1', 'label_2', 'label_3'],
+		folder_path: str = './output/',
+		):
+	df = df.reindex(dt_obs)
+	df = df[df[labels].notnull().any(axis = 1)][['trade_time'] + labels + ['cnt_rule_trigger']]
+
+	# fig = go.Figure(data=[go.Table(
+	# 				header=dict(
+	# 					values=list(df.columns),
+	# 					# fill_color='paleturquoise',
+	# 					align='center'),
+	# 				cells=dict(
+	# 					values=[df[i] for i in df.columns],
+	# 				# fill_color='lavender',
+	# 				align='center'
+	# 				))
+	# 				])
+
+	# fig.layout.update(title_text = f"<b>AG {start_time.strftime("%Y%m%d")} to {end_time.strftime("%Y%m%d")} 夜盘触发规则交易记录</b>")
+	file_name = f"AG {start_time.strftime("%Y%m%d")} to {end_time.strftime("%Y%m%d")} 夜盘触发规则交易记录.xlsx"
+	save_path = os.path.join(
+		folder_path,
+		file_name,
+	)
+	df.to_excel(save_path, index=False)
+
+	# 自动打开写入的Excel文件
+	location = os.path.join(os.path.abspath("."), save_path)
+	if os.name == "nt":  # 如果是 Windows 系统
+		os.startfile(location)
+		print(' ✓ 已自动打开 Excel 文件')
+	else:  # 如果是其他系统，可以尝试使用 subprocess 模块
+		try:
+			subprocess.Popen(["xdg-open", location])
+		except OSError:
+			print("Could not open the file.")
+
+
+	# # 设置HTTP服务器
+
+	# 自动打开浏览器
+	# try:
+	# 	webbrowser.open(location)
+	# 	print(' ✓ 已自动打开浏览器\n')
+	# except Exception as e:
+	# 	print(f' ⚠ 无法自动打开浏览器: {e}')
+	# 	print('请手动访问: ', os.path.join(os.path.abspath('.'), save_path) + '\n')
+
+
+
+
+
+
+
+
 
 
 # test
