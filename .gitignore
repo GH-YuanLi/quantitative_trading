@@ -14,6 +14,6 @@ wheels/
 *.xls
 *.xlsx
 # log files
-# *.log
+*.log
 # html files
 *.html

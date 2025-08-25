@@ -142,10 +142,8 @@ while True:
 print('\n数据可视化中...\n')
 # ① 无其他功能
 # data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
-# ② 添加时间搜索栏，通过时间按范围搜索
-# data_visualization.dash_time_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)
-# ③ 添加时间搜索栏，通过时间点搜索
-data_visualization.dash_time_point_range_filter(df, dt_obs, dt_breaks, start_time, end_time, type)
+# ③ 添加时间搜索栏：按时间跨度或时间点搜索
+data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type, filter_by = 'point')
 logging.info(' - 完成数据可视化')
 
 
