@@ -48,7 +48,7 @@ def html_subplot(
 	# 5.1 K 线
 	fig.add_trace(
 		go.Candlestick(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			open=df['open'],
 			high=df['high'],
 			low=df['low'],
@@ -64,7 +64,7 @@ def html_subplot(
 	# 5.2 布林带
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["boll_up"],
 			y=df['boll_UB'],
 			line=dict(color='rgba(0,100,80,0.5)'),
@@ -75,7 +75,7 @@ def html_subplot(
 	)
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["boll_bot"],
 			y=df['boll_LB'],
 			line=dict(color='rgba(0,100,80,0.5)'),
@@ -87,7 +87,7 @@ def html_subplot(
 	)
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["boll_mid"],
 			y=df['boll_MB'],
 			line=dict(color='blue', width=1),
@@ -100,7 +100,7 @@ def html_subplot(
 	# 5.3 Donchian channel
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["don_hi"],
 			y=df['DC_Upper'],
 			line=dict(color='gray', dash='dot'),
@@ -111,7 +111,7 @@ def html_subplot(
 	)
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["don_lo"],
 			y=df['DC_Lower'],
 			line=dict(color='gray', dash='dot'),
@@ -122,7 +122,7 @@ def html_subplot(
 	)
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			# y=df["don_mid"],
 			y=df['DC_Middle'],
 			line=dict(color='gray', dash='dot'),
@@ -135,7 +135,7 @@ def html_subplot(
 	# 5.4 ADX
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			y=df['ADX'],
 			line=dict(color='orange'),
 			name='ADX(10)',
@@ -149,7 +149,7 @@ def html_subplot(
 	# 5.5 ATR
 	fig.add_trace(
 		go.Scatter(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			y=df['ATR'],
 			line=dict(color='purple'),
 			name='ATR(10)',
@@ -170,7 +170,7 @@ def html_subplot(
 	#                          row=2, col=1)
 	fig.add_trace(
 		go.Bar(
-			x=df.trade_time,
+			x=df.trade_time_str,
 			y=df['volume'],
 			name='Volume',
 			opacity=0.9,
@@ -311,7 +311,7 @@ def dash_w_filter(
 		# K线
 		fig.add_trace(
 			go.Candlestick(
-				x=df_slice.trade_time,
+				x=df_slice.trade_time_str,
 				open=df_slice['open'],
 				high=df_slice['high'],
 				low=df_slice['low'],
@@ -327,20 +327,20 @@ def dash_w_filter(
 		# 布林带
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['boll_UB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Upper'
+				x=df_slice.trade_time_str, y=df_slice['boll_UB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Upper'
 			),
 			row=3,
 			col=1,
 		)
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['boll_LB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Lower'
+				x=df_slice.trade_time_str, y=df_slice['boll_LB'], line=dict(color='rgba(0,100,80,0.5)'), name='Boll Lower'
 			),
 			row=3,
 			col=1,
 		)
 		fig.add_trace(
-			go.Scatter(x=df_slice.trade_time, y=df_slice['boll_MB'], line=dict(color='blue', width=1), name='Boll Mid'),
+			go.Scatter(x=df_slice.trade_time_str, y=df_slice['boll_MB'], line=dict(color='blue', width=1), name='Boll Mid'),
 			row=3,
 			col=1,
 		)
@@ -348,21 +348,21 @@ def dash_w_filter(
 		# Donchian
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['DC_Upper'], line=dict(color='gray', dash='dot'), name='Don High'
+				x=df_slice.trade_time_str, y=df_slice['DC_Upper'], line=dict(color='gray', dash='dot'), name='Don High'
 			),
 			row=3,
 			col=1,
 		)
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['DC_Lower'], line=dict(color='gray', dash='dot'), name='Don Low'
+				x=df_slice.trade_time_str, y=df_slice['DC_Lower'], line=dict(color='gray', dash='dot'), name='Don Low'
 			),
 			row=3,
 			col=1,
 		)
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time, y=df_slice['DC_Middle'], line=dict(color='gray', dash='dot'), name='Don Mid'
+				x=df_slice.trade_time_str, y=df_slice['DC_Middle'], line=dict(color='gray', dash='dot'), name='Don Mid'
 			),
 			row=3,
 			col=1,
@@ -371,7 +371,7 @@ def dash_w_filter(
 		# 5.4 ADX
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time,
+				x=df_slice.trade_time_str,
 				y=df_slice['ADX'],
 				line=dict(color='orange'),
 				name='ADX(10)',  # yaxis="y",
@@ -384,7 +384,7 @@ def dash_w_filter(
 		# 5.5 ATR
 		fig.add_trace(
 			go.Scatter(
-				x=df_slice.trade_time,
+				x=df_slice.trade_time_str,
 				y=df_slice['ATR'],
 				line=dict(color='purple'),
 				name='ATR(10)',  # yaxis="y2",
@@ -404,7 +404,7 @@ def dash_w_filter(
 		#                          row=2, col=1)
 		fig.add_trace(
 			go.Bar(
-				x=df_slice.trade_time,
+				x=df_slice.trade_time_str,
 				y=df_slice['volume'],
 				name='Volume',
 				opacity=0.9,
@@ -419,8 +419,8 @@ def dash_w_filter(
 		)
 
 		# 根据切片设置标题的日期范围
-		_slice_start = pd.to_datetime(df_slice['trade_time'].iloc[0]) if len(df_slice) else pd.to_datetime(start_time)
-		_slice_end = pd.to_datetime(df_slice['trade_time'].iloc[-1]) if len(df_slice) else pd.to_datetime(end_time)
+		_slice_start = pd.to_datetime(df_slice['trade_time_str'].iloc[0]) if len(df_slice) else pd.to_datetime(start_time)
+		_slice_end = pd.to_datetime(df_slice['trade_time_str'].iloc[-1]) if len(df_slice) else pd.to_datetime(end_time)
 		fig.update_layout(
 			# title=f"AG {_slice_start.strftime('%Y%m%d')} ~ {_slice_end.strftime('%Y%m%d')} 时间范围回放",
 			# title='<b>AG {} ~ {} 夜盘交互式回放</b>'.format(_slice_start.strftime('%Y%m%d'), _slice_end.strftime('%Y%m%d')),
@@ -445,11 +445,11 @@ def dash_w_filter(
 
 	# 默认时间范围：使用数据中的最小/最大 trade_time
 	df = df.reindex(dt_obs)
-	start_default = str(min(df['trade_time']))
-	end_default = str(max(df['trade_time']))
+	start_default = str(min(df['trade_time_str']))
+	end_default = str(max(df['trade_time_str']))
 
 	# 初始子集
-	df_init = df[(df['trade_time'] >= start_default) & (df['trade_time'] <= end_default)]
+	df_init = df[(df['trade_time_str'] >= start_default) & (df['trade_time_str'] <= end_default)]
 	fig = _build_fig(df_init)
 
 	# 时间过滤功能选择
@@ -498,7 +498,7 @@ def dash_w_filter(
 				start_v = start_value or start_default
 				end_v = end_value or end_default
 				# 截取范围
-				df_slice = df[(df['trade_time'] >= start_v) & (df['trade_time'] <= end_v)]
+				df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
 				# 将缺失时间限定到当前输入范围，避免无关的断点
 				local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
 				if len(df_slice) == 0:
@@ -544,7 +544,7 @@ def dash_w_filter(
 				start_v = start_obs_v or start_default
 				end_v = end_obs_v or end_default
 				# 截取范围
-				df_slice = df[(df['trade_time'] >= start_v) & (df['trade_time'] <= end_v)]
+				df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
 				# 将缺失时间限定到当前输入范围，避免无关的断点
 				local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
 
@@ -732,7 +732,11 @@ def table_show(
 	folder_path: str = './output/',
 ):
 	df = df.reindex(dt_obs)
-	df = df[df[labels].notnull().any(axis=1)][['trade_time','DC_Upper','DC_Lower','DC_high_20','DC_low_20','DC_high_diff_20','DC_low_diff_20'] + labels + ['cnt_rule_trigger']]
+	df = df[df[labels].notnull().any(axis=1)][
+		['trade_time', 'DC_Upper', 'DC_Lower', 'DC_high_20', 'DC_low_20', 'DC_high_diff_20', 'DC_low_diff_20']
+		+ labels
+		+ ['cnt_rule_trigger']
+	]
 
 	# fig = go.Figure(data=[go.Table(
 	# 				header=dict(
@@ -747,7 +751,9 @@ def table_show(
 	# 				])
 
 	# fig.layout.update(title_text = f"<b>AG {start_time.strftime("%Y%m%d")} to {end_time.strftime("%Y%m%d")} 夜盘触发规则交易记录</b>")
-	file_name = 'AG {} to {} 夜盘起涨点_{}.xlsx'.format(start_time.strftime("%Y%m%d"), end_time.strftime("%Y%m%d"), datetime.datetime.now().strftime('%Y%m%d'))
+	file_name = 'AG {} to {} 夜盘起涨点_{}.xlsx'.format(
+		start_time.strftime('%Y%m%d'), end_time.strftime('%Y%m%d'), datetime.datetime.now().strftime('%Y%m%d')
+	)
 	save_path = os.path.join(
 		folder_path,
 		file_name,

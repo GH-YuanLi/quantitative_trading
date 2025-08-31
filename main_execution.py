@@ -54,50 +54,60 @@ while True:
 		print('Please try again.')
 
 
-
 # 是否对全量数据计算指标和规则及统计值
-# 基于数据先设置默认时间
-default_start_time = datetime.datetime.strptime("20190101", '%Y%m%d')
-default_end_time = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d'), '%Y%m%d')
+while True:
+	flag_calc = input(' - 是否对全量数据计算指标和规则及统计值（Y/N）：').strip().replace("'", '')
+	try:
+		assert flag_calc.upper() in ['Y', 'N'], 'Invalid input'
+		if flag_calc.upper() == 'Y':
+			flag_calc = True
+		else:
+			flag_calc = False
+		break
+	except Exception as e:
+		print(e, end='. ')
+		print('Please try again.')
 
-# 数据预处理
-print('\n数据预处理中...\n')
-data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time)
-df = data_prep.load_data()
-logging.info(' - 完成数据加载')
 
-try:
-	dt_all, dt_obs = data_prep.time_filter(df, flag_break=False) #不计算break
-except Exception:
-	print('⚠ Warning: no trading exists for the date you selected!')
-	sys.exit(1)
-logging.info(' - 完成XXXX')
+if flag_calc:  # 计算全量数据指标和规则及统计值
+	# 基于数据先设置默认时间
+	default_start_time = datetime.datetime.strptime('20190101', '%Y%m%d')
+	default_end_time = datetime.datetime.strptime(
+		datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d'), '%Y%m%d'
+	)
 
-# 数据补全
-df = data_prep.fill_missing_data(df, dt_all)
-logging.info(' - 完成数据补全')
+	# 数据预处理
+	print('\n数据预处理中...\n')
+	data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time)
+	df = data_prep.load_data()
+	logging.info(' - 完成数据加载')
 
-# 指标计算
-df = quantitative_metrics.cal_metrics(df).add_metrics()
-logging.info(' - 完成指标计算')
-# print(df.info())
+	try:
+		dt_all, dt_obs = data_prep.time_filter(df, flag_break=False)  # 不计算break
+	except Exception:
+		print('⚠ Warning: no trading exists for the date you selected!')
+		sys.exit(1)
+	logging.info(' - 完成XXXX')
 
-# 触发规则标注
-rule_1 = trigger_rule.rule_1(df)
-df = rule_1.apply()
-rule_1.stat()
-# df = trigger_rule.rule_1(df)
-# df = trigger_rule.rule_3(df)
-# print(df[df.label_1.notnull()])
-# print(df[df.label_3.notnull()])
-labels = ['flag_DC_high_le_15', 'flag_DC_low_le_15']
-df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
-data_visualization.table_show(df, dt_obs, default_start_time, default_end_time, labels = labels)
-print(" - 完成规则触发打标")
-logging.info(' - 完成规则触发打标')
+	# 数据补全
+	df = data_prep.fill_missing_data(df, dt_all)
+	logging.info(' - 完成数据补全')
 
-df[(df.trade_time >= '2024-01-01') & (df.trade_time <= '2024-01-10')].to_csv('test.csv')
+	# 指标计算
+	df = quantitative_metrics.cal_metrics(df).add_metrics()
+	logging.info(' - 完成指标计算')
 
+	# 触发规则标注
+	rule_1 = trigger_rule.rule_1(df)
+	df = rule_1.apply()
+	rule_1.stat()
+	labels = ['flag_DC_high_le_15', 'flag_DC_low_le_15']
+	df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
+	data_visualization.table_show(df, dt_obs, default_start_time, default_end_time, labels=labels)
+	print(' - 完成规则触发打标')
+	logging.info(' - 完成规则触发打标')
+
+# df[(df.trade_time >= '2024-01-01') & (df.trade_time <= '2024-01-10')].to_csv('test.csv')
 
 
 # 是否对部分数据进行可视化：
@@ -135,27 +145,52 @@ print(f' ✓ 已选择的观测时间范围：{start_time} ~ {end_time + datetim
 # logging.info(' - 观测指标：布林线、唐奇安通道、ADX、ATR')
 
 
+if not flag_calc:
+	# 数据预处理
+	print('\n数据预处理中...\n')
+	data_prep = data_preprocessing.Data_preprocessing(start_time, end_time)
+	df = data_prep.load_data()
+	logging.info(' - 完成选定时间区间的数据加载')
+
 
 
 # 根据选定的时间框选数据和指标
-visual_metrics_lst = ['open','close','high','low','volume','amount','boll_MB','boll_UB','boll_LB','DC_Upper','DC_Lower','DC_Middle','ADX','ATR']
-df["trade_time"] = pd.to_datetime(df["trade_time"])
+visual_metrics_lst = [
+	'open',
+	'close',
+	'high',
+	'low',
+	'volume',
+	'amount',
+]
 df = (
-            df[
-                (df["date"] >= start_time)
-                & (df["date"] <= end_time + datetime.timedelta(days=1))
-				& (df[visual_metrics_lst].notnull().any(axis=1))
-            ]
-            .sort_values("date")
-            .copy()
-        )
+	df[
+		(df['trade_time'] >= start_time) &
+		(df['trade_time'] <= end_time + datetime.timedelta(days=1)) &
+		(df[visual_metrics_lst].notnull().any(axis=1))
+	]
+	.sort_values('trade_time')
+	.copy()
+)
 try:
 	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df, flag_break=True)  # 计算breaks
+	print(len(dt_all), len(dt_obs), len(dt_breaks))
 except Exception:
 	print('⚠ Warning: no trading exists for the date you selected!')
 	sys.exit(1)
-df["trade_time"] = df["trade_time"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 logging.info(' - 完成XXXX')
+
+
+if not flag_calc:
+	# 数据补全
+	df = data_prep.fill_missing_data(df, dt_all)
+	logging.info(' - 完成选定时间区间的数据补全')
+
+	# 指标计算
+	df = quantitative_metrics.cal_metrics(df).add_metrics()
+	logging.info(' - 完成选定时间区间的指标计算')
+
+
 
 
 
@@ -178,7 +213,7 @@ print('\n数据可视化中...\n')
 # ① 无其他功能
 # data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
 # ③ 添加时间搜索栏：按时间跨度或时间点搜索
-data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type, filter_by = 'point')
+data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type, filter_by='point')
 logging.info(' - 完成数据可视化')
 
 

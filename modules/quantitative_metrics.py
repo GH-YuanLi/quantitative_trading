@@ -96,7 +96,7 @@ def calculate_adx(df, period=10):
 
 	# df['-DM'] = 0.0
 	# df.loc[df['down_move'] > df['up_move'], '-DM'] = df['down_move'].clip(lower=0)
-    # second approach
+	# second approach
 	df['+DM'] = df['high'].diff()
 	df['-DM'] = -df['low'].diff()
 
@@ -192,8 +192,6 @@ class cal_metrics:
 		df = calculate_adx(df, self.adx_period)
 		df = calculate_atr(df, self.atr_period)
 		df['flag_increase'] = df['close'] >= df['open']
-
-		df['date'] = pd.to_datetime(df['trade_time'])
 
 		return df
 

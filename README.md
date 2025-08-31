@@ -6,6 +6,11 @@
 
 # Development log
 
+## 20240831
+
+1. 规则模块 **trigger_rule.py** 添加首个规则：rule_1
+2. 调整 **main_excution.py** 整体 pipeline
+
 ## 20240822
 
 1. 增加可视化dash的**日期搜索和定位功能**：包括通过时间段搜索和通过日期搜索；
