@@ -1,3 +1,4 @@
+import datetime
 import http.server
 import os
 import socketserver
@@ -281,7 +282,6 @@ def html_subplot(
 			print('请手动访问: ', os.path.join(os.path.abspath('.'), save_path) + '\n')
 
 
-
 # 交互式：添加时间范围搜索栏，按输入的时间范围截取趋势、或时间节点前后20分钟的观测时间范围
 def dash_w_filter(
 	df: pd.DataFrame,
@@ -424,7 +424,9 @@ def dash_w_filter(
 		fig.update_layout(
 			# title=f"AG {_slice_start.strftime('%Y%m%d')} ~ {_slice_end.strftime('%Y%m%d')} 时间范围回放",
 			# title='<b>AG {} ~ {} 夜盘交互式回放</b>'.format(_slice_start.strftime('%Y%m%d'), _slice_end.strftime('%Y%m%d')),
-			title="<b>AG {} ~ {} 夜盘交互式回放</b>".format(start_time.strftime('%Y年%m月%d日'), end_time.strftime('%Y年%m月%d日')),
+			title='<b>AG {} ~ {} 夜盘交互式回放</b>'.format(
+				start_time.strftime('%Y年%m月%d日'), end_time.strftime('%Y年%m月%d日')
+			),
 			width=2000,
 			height=1000,
 			hovermode='x unified',
@@ -452,6 +454,7 @@ def dash_w_filter(
 
 	# 时间过滤功能选择
 	app = JupyterDash(__name__)
+	# 过滤模式一：通过时间范围选择
 	if filter_by == 'range':
 		app.layout = html.Div(
 			[
@@ -504,6 +507,7 @@ def dash_w_filter(
 			except Exception:
 				return _build_fig(df_init, rb_values=dt_breaks)
 
+	# 过滤模式二：通过时间节点选择
 	elif filter_by == 'point':
 		app.layout = html.Div(
 			[
@@ -728,7 +732,7 @@ def table_show(
 	folder_path: str = './output/',
 ):
 	df = df.reindex(dt_obs)
-	df = df[df[labels].notnull().any(axis=1)][['trade_time'] + labels + ['cnt_rule_trigger']]
+	df = df[df[labels].notnull().any(axis=1)][['trade_time','DC_Upper','DC_Lower','DC_high_20','DC_low_20','DC_high_diff_20','DC_low_diff_20'] + labels + ['cnt_rule_trigger']]
 
 	# fig = go.Figure(data=[go.Table(
 	# 				header=dict(
@@ -743,9 +747,7 @@ def table_show(
 	# 				])
 
 	# fig.layout.update(title_text = f"<b>AG {start_time.strftime("%Y%m%d")} to {end_time.strftime("%Y%m%d")} 夜盘触发规则交易记录</b>")
-	file_name = 'AG {} to {} 夜盘触发规则交易记录.xlsx'.format(
-		start_time.strftime('%Y%m%d'), end_time.strftime('%Y%m%d')
-	)
+	file_name = 'AG {} to {} 夜盘起涨点_{}.xlsx'.format(start_time.strftime("%Y%m%d"), end_time.strftime("%Y%m%d"), datetime.datetime.now().strftime('%Y%m%d'))
 	save_path = os.path.join(
 		folder_path,
 		file_name,

@@ -54,6 +54,53 @@ while True:
 		print('Please try again.')
 
 
+
+# 是否对全量数据计算指标和规则及统计值
+# 基于数据先设置默认时间
+default_start_time = datetime.datetime.strptime("20190101", '%Y%m%d')
+default_end_time = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d'), '%Y%m%d')
+
+# 数据预处理
+print('\n数据预处理中...\n')
+data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time)
+df = data_prep.load_data()
+logging.info(' - 完成数据加载')
+
+try:
+	dt_all, dt_obs = data_prep.time_filter(df, flag_break=False) #不计算break
+except Exception:
+	print('⚠ Warning: no trading exists for the date you selected!')
+	sys.exit(1)
+logging.info(' - 完成XXXX')
+
+# 数据补全
+df = data_prep.fill_missing_data(df, dt_all)
+logging.info(' - 完成数据补全')
+
+# 指标计算
+df = quantitative_metrics.cal_metrics(df).add_metrics()
+logging.info(' - 完成指标计算')
+# print(df.info())
+
+# 触发规则标注
+rule_1 = trigger_rule.rule_1(df)
+df = rule_1.apply()
+rule_1.stat()
+# df = trigger_rule.rule_1(df)
+# df = trigger_rule.rule_3(df)
+# print(df[df.label_1.notnull()])
+# print(df[df.label_3.notnull()])
+labels = ['flag_DC_high_le_15', 'flag_DC_low_le_15']
+df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
+data_visualization.table_show(df, dt_obs, default_start_time, default_end_time, labels = labels)
+print(" - 完成规则触发打标")
+logging.info(' - 完成规则触发打标')
+
+df[(df.trade_time >= '2024-01-01') & (df.trade_time <= '2024-01-10')].to_csv('test.csv')
+
+
+
+# 是否对部分数据进行可视化：
 # 选择观测时间
 while True:
 	start_time = input(' - 请选择想要观测的起始时间（YYYYMMDD）：').strip().replace("'", '')
@@ -85,43 +132,31 @@ while True:
 logging.info(f' - 观测时间范围：{start_time} ~ {end_time + datetime.timedelta(days=1)}')
 print(f' ✓ 已选择的观测时间范围：{start_time} ~ {end_time + datetime.timedelta(days=1)}')
 
-logging.info(' - 观测指标：布林线、唐奇安通道、ADX、ATR')
+# logging.info(' - 观测指标：布林线、唐奇安通道、ADX、ATR')
 
 
-# print(date_format)
 
-# 数据预处理
-print('\n数据预处理中...\n')
-data_prep = data_preprocessing.Data_preprocessing(start_time, end_time)
-df = data_prep.load_data()
-logging.info(' - 完成数据加载')
 
+# 根据选定的时间框选数据和指标
+visual_metrics_lst = ['open','close','high','low','volume','amount','boll_MB','boll_UB','boll_LB','DC_Upper','DC_Lower','DC_Middle','ADX','ATR']
+df["trade_time"] = pd.to_datetime(df["trade_time"])
+df = (
+            df[
+                (df["date"] >= start_time)
+                & (df["date"] <= end_time + datetime.timedelta(days=1))
+				& (df[visual_metrics_lst].notnull().any(axis=1))
+            ]
+            .sort_values("date")
+            .copy()
+        )
 try:
-	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df)
+	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df, flag_break=True)  # 计算breaks
 except Exception:
 	print('⚠ Warning: no trading exists for the date you selected!')
 	sys.exit(1)
+df["trade_time"] = df["trade_time"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 logging.info(' - 完成XXXX')
 
-# 数据补全
-df = data_prep.fill_missing_data(df, dt_all)
-logging.info(' - 完成数据补全')
-
-# 指标计算
-df = quantitative_metrics.cal_metrics(df).add_metrics()
-logging.info(' - 完成指标计算')
-# print(df.info())
-
-# 触发规则标注
-df = trigger_rule.rule_1(df)
-df = trigger_rule.rule_3(df)
-# print(df[df.label_1.notnull()])
-# print(df[df.label_3.notnull()])
-labels = ['label_1', 'label_3']
-df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
-data_visualization.table_show(df, dt_obs, start_time, end_time, labels = labels)
-print(" - 完成规则触发打标")
-logging.info(' - 完成规则触发打标')
 
 
 # 选择可视化的横坐标时间格式

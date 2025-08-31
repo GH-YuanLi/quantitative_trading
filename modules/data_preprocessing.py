@@ -14,23 +14,25 @@ import pandas as pd
 class Data_preprocessing:
     def __init__(self, start_date, end_date):
         # self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.csv")
-        self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.parquet")
+        # self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.parquet")
+        self.data_path = os.path.join("./data/", "AG_1min_2019 - 2025.csv")
         self.start_date = start_date
         self.end_date = end_date
 
     def load_data(self):
         # dataframe to parquet datafile
-        # df = pd.read_csv(
-        #     self.data_path,
-        #     parse_dates=["trade_time"],
-        #     # low_memory=False
-        # )
+        df = pd.read_csv(
+            self.data_path,
+            parse_dates=["trade_time"],
+            # low_memory=False
+        )
+        df.rename(columns={'trade_date':'trade_day'}, inplace=True)
         # df['open'] = df['open'].astype(float)
         # df['close'] = df['close'].astype(float)
         # df['amount'] = df['amount'].astype(float)
         # df.to_parquet(os.path.join("./data/", "AG_1min_20100101_20250801.parquet"))
 
-        df = pd.read_parquet(self.data_path, engine="pyarrow")
+        # df = pd.read_parquet(self.data_path, engine="pyarrow")
 
         # 提取需要观测的数据范围
         df = (
@@ -44,10 +46,18 @@ class Data_preprocessing:
             .sort_values("trade_time")
             .copy()
         )
+        # print(df[df.trade_time.dt.year == 2019].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2020].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2021].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2022].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2023].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2024].trade_day.nunique())
+        # print(df[df.trade_time.dt.year == 2025].trade_day.nunique())
+        # df['flag_trading_date'] = True
         # print(df.trade_time.min(), df.trade_time.max())
         return df
 
-    def time_filter(self, df):
+    def time_filter(self, df, flag_break=True):
         # 筛选时间，保留交易日 21:00 ~ 次日 01:00的数据
         def night_filter(group):
             date = group.name
@@ -71,13 +81,16 @@ class Data_preprocessing:
                 for d in pd.to_datetime(df_night_shift["trade_time"])
             ]
             # 获取所有缺失时间
-            self.dt_breaks = [
-                d
-                for d in self.dt_all.strftime("%Y-%m-%d %H:%M:%S").tolist()
-                if d not in self.dt_obs
-            ]
+            if flag_break:
+                self.dt_breaks = [
+                    d
+                    for d in self.dt_all.strftime("%Y-%m-%d %H:%M:%S").tolist()
+                    if d not in self.dt_obs
+                ]
+                return self.dt_all, self.dt_obs, self.dt_breaks
+            else:
+                return self.dt_all, self.dt_obs
 
-            return self.dt_all, self.dt_obs, self.dt_breaks
         except Exception as e:
             print(e)
 
@@ -103,7 +116,7 @@ class Data_preprocessing:
             inplace=True,
         )
         # 删除无用的列
-        df.drop(["ts_code", "trade_date", "session"], axis=1, inplace=True)
+        df.drop(["ts_code", "session"], axis=1, inplace=True)
 
         df.set_index("datetime", inplace=True)
         df.sort_index(inplace=True)
