@@ -77,7 +77,7 @@ if flag_calc:  # 计算全量数据指标和规则及统计值
 	)
 
 	# 数据预处理
-	print('\n数据预处理中...\n')
+	print('\n全量数据预处理中...\n')
 	data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time)
 	df = data_prep.load_data()
 	logging.info(' - 完成数据加载')
@@ -104,8 +104,8 @@ if flag_calc:  # 计算全量数据指标和规则及统计值
 	labels = ['flag_DC_high_le_15', 'flag_DC_low_le_15']
 	df['cnt_rule_trigger'] = df[labels].notna().sum(axis=1)
 	data_visualization.table_show(df, dt_obs, default_start_time, default_end_time, labels=labels)
-	print(' - 完成规则触发打标')
-	logging.info(' - 完成规则触发打标')
+	print(' ✓ 完成触发规则打标\n')
+	logging.info(' - 完成触发规则打标')
 
 # df[(df.trade_time >= '2024-01-01') & (df.trade_time <= '2024-01-10')].to_csv('test.csv')
 
@@ -113,7 +113,7 @@ if flag_calc:  # 计算全量数据指标和规则及统计值
 # 是否对部分数据进行可视化：
 # 选择观测时间
 while True:
-	start_time = input(' - 请选择想要观测的起始时间（YYYYMMDD）：').strip().replace("'", '')
+	start_time = input(' - 请选择可视化观测的起始时间（YYYYMMDD）：').strip().replace("'", '')
 	try:
 		start_time = datetime.datetime.strptime(str(start_time), '%Y%m%d')
 		# start_year = start_time.year
@@ -124,7 +124,7 @@ while True:
 		print(e, end='. ')
 		print('Invalid date format, please input again')
 while True:
-	end_time = input(' - 请选择想要观测的终止时间（YYYYMMDD）：').strip().replace("'", '')
+	end_time = input(' - 请选择可视化观测的终止时间（YYYYMMDD）：').strip().replace("'", '')
 	try:
 		end_time = datetime.datetime.strptime(str(end_time), '%Y%m%d')
 		assert start_time <= end_time, 'Invalid date range'
@@ -173,8 +173,7 @@ df = (
 	.copy()
 )
 try:
-	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df, flag_break=True)  # 计算breaks
-	print(len(dt_all), len(dt_obs), len(dt_breaks))
+	dt_all, dt_obs, dt_breaks = data_prep.time_filter(df, flag_break=True)  # 计算间断时间
 except Exception:
 	print('⚠ Warning: no trading exists for the date you selected!')
 	sys.exit(1)
@@ -213,7 +212,7 @@ print('\n数据可视化中...\n')
 # ① 无其他功能
 # data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
 # ③ 添加时间搜索栏：按时间跨度或时间点搜索
-data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type, filter_by='point')
+data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type) #, filter_by='point'
 logging.info(' - 完成数据可视化')
 
 

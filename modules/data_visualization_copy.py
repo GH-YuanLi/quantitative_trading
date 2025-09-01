@@ -29,7 +29,7 @@ def html_subplot(
 	start_time,
 	end_time,
 	type: str = 'date',
-	folder_path: str = './',
+	folder_path: str = './graphs/',
 ):
 	df = df.reindex(dt_obs)
 
@@ -290,8 +290,10 @@ def dash_w_filter(
 	start_time,
 	end_time,
 	type: str = 'date',  # 可视化横坐标类型
+	filter_by: str = 'point',  # 时间过滤器
 ):
 	assert type in ['date', 'category'], "type should be one of ['date', 'category']"
+	assert filter_by in ['range', 'point'], "filter_by should be one of ['range', 'point']"
 
 	def _build_fig(df_slice: pd.DataFrame, rb_values=None) -> go.Figure:
 		fig = make_subplots(
@@ -402,6 +404,12 @@ def dash_w_filter(
 
 		# 5.6 volume
 		colors = {True: 'red', False: 'green'}
+
+		# for t in df['flag_increase'].unique():
+		#     dfp = df[df['flag_increase']==t]
+		#     fig.add_trace(go.Bar(x=dfp.index, y = dfp['volume'],
+		#                          marker=dict(color=colors[t], opacity = 0.6)),
+		#                          row=2, col=1)
 		fig.add_trace(
 			go.Bar(
 				x=df_slice.trade_time_str,
@@ -419,7 +427,11 @@ def dash_w_filter(
 		)
 
 		# 根据切片设置标题的日期范围
+		# _slice_start = pd.to_datetime(df_slice['trade_time_str'].iloc[0]) if len(df_slice) else pd.to_datetime(start_time)
+		# _slice_end = pd.to_datetime(df_slice['trade_time_str'].iloc[-1]) if len(df_slice) else pd.to_datetime(end_time)
 		fig.update_layout(
+			# title=f"AG {_slice_start.strftime('%Y%m%d')} ~ {_slice_end.strftime('%Y%m%d')} 时间范围回放",
+			# title='<b>AG {} ~ {} 夜盘交互式回放</b>'.format(_slice_start.strftime('%Y%m%d'), _slice_end.strftime('%Y%m%d')),
 			title='<b>AG {} ~ {} 夜盘交互式回放</b>'.format(
 				start_time.strftime('%Y年%m月%d日'), end_time.strftime('%Y年%m月%d日')
 			),
@@ -448,211 +460,161 @@ def dash_w_filter(
 	df_init = df[(df['trade_time_str'] >= start_default) & (df['trade_time_str'] <= end_default)]
 	fig = _build_fig(df_init)
 
-	# 创建统一的界面，同时支持两种过滤模式
+	# 时间过滤功能选择
 	app = JupyterDash(__name__)
-	app.layout = html.Div(
-		[
-			html.Div(
-				[
-					# 过滤模式一：通过时间节点选择（观测时间前后20分钟）
-					html.Div(
-						[
-							html.Label(
-								'观测时间模式：选择观测时间（前后20分钟）',
-								style={'font-weight': 'bold', 'margin-bottom': '10px'},
-							),
-							html.Div(
-								[
-									html.Label('观测时间', style={'margin-right': '10px'}),
-									dcc.Input(
-										id='observe-time',
-										type='text',
-										value=None,
-										placeholder='YYYY-MM-DD HH:MM:SS',
-										style={'width': '160px', 'margin-right': '10px'},
-									),
-									html.Button(
-										'应用观测时间',
-										id='apply-point',
-										n_clicks=0,
-										style={
-											'background-color': '#4CAF50',
-											'color': 'white',
-											'border': 'none',
-											'padding': '8px 16px',
-										},
-									),
-								],
-								style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'},
-							),
-						],
-						style={
-							'border': '1px solid #ddd',
-							'padding': '15px',
-							'border-radius': '5px',
-							'margin-bottom': '20px',
-						},
-					),
-					# 过滤模式二：通过时间范围选择
-					html.Div(
-						[
-							html.Label(
-								'时间范围模式：选择开始和结束时间',
-								style={'font-weight': 'bold', 'margin-bottom': '10px'},
-							),
-							html.Div(
-								[
-									html.Label('开始时间', style={'margin-right': '10px'}),
-									dcc.Input(
-										id='start-time',
-										type='text',
-										value=start_default,
-										# value=None,
-										placeholder='YYYY-MM-DD HH:MM:SS',
-										style={'width': '160px', 'margin-right': '10px'},
-									),
-									html.Label('结束时间', style={'margin-right': '10px'}),
-									dcc.Input(
-										id='end-time',
-										type='text',
-										value=end_default,
-										# value=None,
-										placeholder='YYYY-MM-DD HH:MM:SS',
-										style={'width': '160px', 'margin-right': '10px'},
-									),
-									html.Button(
-										'应用时间范围',
-										id='apply-range',
-										n_clicks=0,
-										style={
-											'background-color': '#2196F3',
-											'color': 'white',
-											'border': 'none',
-											'padding': '8px 16px',
-											'margin-right': '10px',
-										},
-									),
-									html.Button(
-										'明细数据下载',
-										id='download-detail',
-										n_clicks=0,
-										style={
-											# 'background-color': '#2196F3',
-											# 'color': 'white',
-											'border': 'none',
-											'padding': '8px 16px',
-											'margin-right': '10px',
-										},
-									),
-								],
-								style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'},
-							),
-						],
-						style={
-							'border': '1px solid #ddd',
-							'padding': '15px',
-							'border-radius': '5px',
-							'margin-bottom': '20px',
-						},
-					),
-				],
-				style={'margin': '20px 0'},
-			),
-			dcc.Graph(id='dashFig', figure=fig),
-		],
-		style={'font-family': 'Arial', 'font-size': '0.9em', 'padding': '20px'},
-	)
+	# 过滤模式一：通过时间范围选择
+	if filter_by == 'range':
+		app.layout = html.Div(
+			[
+				html.Div(
+					[
+						# 根据明确额时间范围筛选
+						html.Label('选择开始时间', style={'margin-left': '100px', 'margin-top': '50px'}),
+						dcc.Input(
+							id='start-time',
+							type='text',
+							value=start_default,
+							placeholder='YYYY-MM-DD HH:MM:SS',
+							style={'width': '150px'},
+						),
+						html.Label('选择结束时间', style={'margin-left': '10px', 'margin-top': '50px'}),
+						dcc.Input(
+							id='end-time',
+							type='text',
+							value=end_default,
+							placeholder='YYYY-MM-DD HH:MM:SS',
+							style={'width': '150px'},
+						),
+						html.Button(
+							'Apply', id='apply-range', n_clicks=0, style={'margin-left': '12px', 'margin-top': '50px'}
+						),
+					],
+					style={'display': 'flex', 'align-items': 'center', 'gap': '6px', 'margin': '8px 0'},
+				),
+				dcc.Graph(id='dashFig', figure=fig),
+			],
+			style={'font-family': 'Arial', 'font-size': '0.9em'},
+		)
 
-	# 回调函数：处理观测时间模式
-	@app.callback(
-		Output('dashFig', 'figure', allow_duplicate=True),
-		Input('apply-point', 'n_clicks'),
-		State('observe-time', 'value'),  # 观测时间
-		prevent_initial_call=True,
-	)
-	def _apply_observe_time(n_clicks, obs_value):
-		try:
-			if not obs_value:
+		@app.callback(
+			Output('dashFig', 'figure'),
+			Input('apply-range', 'n_clicks'),
+			State('start-time', 'value'),  # 开始时间
+			State('end-time', 'value'),  # 终止时间
+		)
+		def _apply_range(n_clicks, start_value, end_value):
+			try:
+				# 容错：若输入为空，使用默认
+				start_v = start_value or start_default
+				end_v = end_value or end_default
+				# 截取范围
+				df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
+				# 将缺失时间限定到当前输入范围，避免无关的断点
+				local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
+				if len(df_slice) == 0:
+					return _build_fig(df_init, rb_values=dt_breaks)
+				return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+			except Exception:
 				return _build_fig(df_init, rb_values=dt_breaks)
 
-			# 获取观测时间前后20分钟的时间范围
-			start_obs_v = str(pd.to_datetime(obs_value) - pd.Timedelta(minutes=20))
-			end_obs_v = str(pd.to_datetime(obs_value) + pd.Timedelta(minutes=20))
+	# 过滤模式二：通过时间节点选择
+	elif filter_by == 'point':
+		app.layout = html.Div(
+			[
+				html.Div(
+					[
+						# 筛选模式一：根据时间节点筛选
+						html.Label('选择观测时间', style={'margin-left': '150px'}),
+						dcc.Input(
+							id='observe-time',
+							type='text',
+							value=None,
+							placeholder='YYYY-MM-DD HH:MM:SS',
+							style={'width': '160px'},
+						),
+						html.Button('Apply', id='apply-point', n_clicks=0, style={'margin-left': '12px'}),
+						# 筛选模式二：根据明确额时间范围筛选
+						html.Label('选择开始时间', style={'margin-left': '100px', 'margin-top': '50px'}),
+						dcc.Input(
+							id='start-time',
+							type='text',
+							value=start_default,
+							placeholder='YYYY-MM-DD HH:MM:SS',
+							style={'width': '160px', 'margin-top': '50px'},
+						),
+						html.Label('选择结束时间', style={'margin-left': '10px', 'margin-top': '50px'}),
+						dcc.Input(
+							id='end-time',
+							type='text',
+							value=end_default,
+							placeholder='YYYY-MM-DD HH:MM:SS',
+							style={'width': '160px', 'margin-top': '50px'},
+						),
+						html.Button(
+							'Apply', id='apply-range', n_clicks=0, style={'margin-left': '12px', 'margin-top': '50px'}
+						),
+					],
+					style={'display': 'flex', 'align-items': 'center', 'gap': '6px', 'margin': '8px 0'},
+				),
+				dcc.Graph(id='dashFig', figure=fig),
+			],
+			style={'font-family': 'Arial', 'font-size': '0.9em'},
+		)
 
-			# 截取范围
-			df_slice = df[(df['trade_time_str'] >= start_obs_v) & (df['trade_time_str'] <= end_obs_v)]
-			# 将缺失时间限定到当前输入范围，避免无关的断点
-			local_breaks = [t for t in dt_breaks if start_obs_v <= t <= end_obs_v]
+		@app.callback(
+			Output('dashFig', 'figure'),
+			Input('apply-point', 'n_clicks'),
+			State('observe-time', 'value'),  # 观测时间
+			# Input('apply-range', 'n_clicks'),
+			# State('start-time', 'value'),  # 开始时间
+			# State('end-time', 'value'),  # 终止时间
+		)
+		# def _apply_range_1(n_clicks, start_value, end_value):
+		# 	try:
+		# 		# 容错：若输入为空，使用默认
+		# 		start_v = start_value or start_default
+		# 		end_v = end_value or end_default
+		# 		# 截取范围
+		# 		df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
+		# 		# 将缺失时间限定到当前输入范围，避免无关的断点
+		# 		local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
+		# 		if len(df_slice) == 0:
+		# 			return _build_fig(df_init, rb_values=dt_breaks)
+		# 		return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+		# 	except Exception:
+		# 		return _build_fig(df_init, rb_values=dt_breaks)
 
-			if len(df_slice) == 0:
+		def _apply_range_2(n_clicks, obs_value):
+			try:
+				# 筛选模式一：获取观测时间前后20min的时间范围：若输入为空，使用默认
+				start_obs_v = str(pd.to_datetime(obs_value) - pd.Timedelta(minutes=20))
+				end_obs_v = str(pd.to_datetime(obs_value) + pd.Timedelta(minutes=20))
+				start_v = start_obs_v or start_default
+				end_v = end_obs_v or end_default
+				# 截取范围
+				df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
+				# 将缺失时间限定到当前输入范围，避免无关的断点
+				local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
+
+				if len(df_slice) == 0:
+					return _build_fig(df_init, rb_values=dt_breaks)
+				return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+			except Exception:
 				return _build_fig(df_init, rb_values=dt_breaks)
-			return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
-		except Exception as e:
-			print(f'观测时间模式错误: {e}')
-			return _build_fig(df_init, rb_values=dt_breaks)
 
-	# 回调函数：处理时间范围模式
-	@app.callback(
-		Output('dashFig', 'figure'),
-		Input('apply-range', 'n_clicks'),
-		State('start-time', 'value'),  # 开始时间
-		State('end-time', 'value'),  # 终止时间
-		prevent_initial_call=True,
-	)
-	def _apply_time_range(n_clicks, start_value, end_value):
-		try:
-			start_v = start_value or start_default
-			end_v = end_value or end_default
-
-			# 截取范围
-			df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
-			# 将缺失时间限定到当前输入范围，避免无关的断点
-			local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
-
-			# 容错：若输入为空，使用默认
-			if len(df_slice) == 0:
-				return _build_fig(df_init, rb_values=dt_breaks)
-			return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
-
-		except Exception as e:
-			print(f'时间范围模式错误: {e}')
-			return _build_fig(df_init, rb_values=dt_breaks)
-
-	@app.callback(
-		Output('dashFig', 'children'),
-		Input('download-detail', 'n_clicks'),
-		State('start-time', 'value'),  # 开始时间
-		State('end-time', 'value'),  # 终止时间
-		prevent_initial_call=True,
-	)
-	def _download_details(n_clicks, start_value, end_value):
-		try:
-			# 获取变量
-			variable_lst = [
-				'open',
-				'close',
-				'high',
-				'low',
-				'boll_MB',
-				'boll_UB',
-				'boll_LB',
-				'DC_Upper',
-				'DC_Lower',
-				'DC_Middle',
-				'ADX',
-				'ATR',
-			]
-			# 截取范围
-			df_downloads = df[(df['trade_time_str'] >= start_value) & (df['trade_time_str'] <= end_value)][variable_lst]
-
-			file_name = f"""AG {pd.to_datetime(start_value).strftime('%Y%m%d')} - {pd.to_datetime(end_value).strftime('%Y%m%d')} 夜盘明细数据_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx"""
-			location = os.path.join(os.path.abspath('.'), 'output', file_name)
-
-			df_downloads.to_excel(location, index=True)
-			print(f'\n选取的明细数据已保存至 {location}')
-
-		except Exception as e:
-			print(f'{e}')
+			# try:
+			# 	# 容错：若输入为空，使用默认
+			# 	start_v = start_value or start_default
+			# 	end_v = end_value or end_default
+			# 	# 截取范围
+			# 	df_slice = df[(df['trade_time_str'] >= start_v) & (df['trade_time_str'] <= end_v)]
+			# 	# 将缺失时间限定到当前输入范围，避免无关的断点
+			# 	local_breaks = [t for t in dt_breaks if start_v <= t <= end_v]
+			# 	if len(df_slice) == 0:
+			# 		return _build_fig(df_init, rb_values=dt_breaks)
+			# 	return _build_fig(df_slice, rb_values=(local_breaks or dt_breaks))
+			# except Exception:
+			# 	return _build_fig(df_init, rb_values=dt_breaks)
 
 	webbrowser.open_new('http://localhost:8051/')
 	print(' ✓ 将自动打开浏览器')

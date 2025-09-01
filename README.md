@@ -1,15 +1,19 @@
 # To do list
 
 1. 增加数据切片功能（1min，5min，......）；
-2. 增加可视化日期搜索和定位功能；
-3. 完善最新数据下载功能；
+2. 完善最新数据下载功能；
 
 # Development log
+
+## 20240901
+
+1. 可视化模块 **data_visualization.py** 同时提供两种时间过滤功能；并添加**明细数据下载功能**，根据选定的时间范围将原始的K线数据和相关指标明细数据写入Excel文件保存到本地；
+2. 
 
 ## 20240831
 
 1. 规则模块 **trigger_rule.py** 添加首个规则：rule_1
-2. 调整 **main_excution.py** 整体 pipeline
+2. 调整 **main_execution.py** 整体 pipeline
 
 ## 20240822
 
