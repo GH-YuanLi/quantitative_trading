@@ -649,7 +649,7 @@ def dash_w_filter(
 			location = os.path.join(os.path.abspath('.'), 'output', file_name)
 
 			df_downloads.to_excel(location, index=True)
-			print(f'\n选取的明细数据已保存至 {location}')
+			print(f'\n选取的明细数据已保存至 {location}\n')
 
 		except Exception as e:
 			print(f'{e}')

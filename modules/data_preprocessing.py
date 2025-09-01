@@ -12,26 +12,22 @@ import pandas as pd
 
 
 class Data_preprocessing:
-	def __init__(self, start_date, end_date):
+	def __init__(self, start_date, end_date, data_filename = "AG_1min_20190101_20250901.parquet"):
 		# self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.csv")
-		# self.data_path = os.path.join("./data/", "AG_1min_20100101_20250801.parquet")
-		self.data_path = os.path.join('./data/', 'AG_1min_2019 - 2025.csv')
+		self.data_path = os.path.join("./data/", data_filename)
+		# self.data_path = os.path.join('./data/', 'AG_1min_2019 - 2025.csv')
 		self.start_date = start_date
 		self.end_date = end_date
 
 	def load_data(self):
-		# dataframe to parquet datafile
-		df = pd.read_csv(
-			self.data_path,
-			parse_dates=['trade_time'],
-			# low_memory=False
-		)
-		# df['open'] = df['open'].astype(float)
-		# df['close'] = df['close'].astype(float)
-		# df['amount'] = df['amount'].astype(float)
-		# df.to_parquet(os.path.join("./data/", "AG_1min_20100101_20250801.parquet"))
-
-		# df = pd.read_parquet(self.data_path, engine="pyarrow")
+		# 读取csv文件
+		# df = pd.read_csv(
+		# 	self.data_path,
+		# 	parse_dates=['trade_time'],
+		# 	# low_memory=False
+		# )
+		# 读取parquet文件
+		df = pd.read_parquet(self.data_path, engine="pyarrow")
 
 		# 重命名列明，以符合 backtrader 的约定
 		df.rename(

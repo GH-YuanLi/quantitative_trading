@@ -10,12 +10,13 @@
 
 import datetime
 import logging
+import os
 import sys
 import warnings
 
 import pandas as pd
 
-from modules import data_preprocessing, data_visualization, quantitative_metrics, trigger_rule
+from modules import data_fetch, data_preprocessing, data_visualization, quantitative_metrics, trigger_rule
 
 # import os
 from utils import utils
@@ -33,6 +34,9 @@ logging.basicConfig(
 	filename=f'./logs/log_detail_{timestamp}.log',
 )
 
+# 读取的数据文件名
+data_filename = "AG_1min_20190101_20250901.parquet"
+
 
 logging.info('MISSION START... ...')
 
@@ -42,10 +46,15 @@ while True:
 	flag_download = input('\n - 是否从Tushare下载最新交易数据（Y/N）：').strip().replace("'", '')
 	try:
 		assert flag_download.upper() in ['Y', 'N'], 'Invalid input'
-		print('模块开发中，敬请期待')
 		if flag_download.upper() == 'Y':
-			# data_fetch.main()
-			pass
+			save_path = os.path.join(os.path.abspath('.'), 'data')  # 保存路径
+			data_fetch.downloads(
+				fut_code='AG',
+				freq='1min',
+				start_date=datetime.datetime(2025, 8, 1),
+				end_date=datetime.datetime.now(),
+				folder=save_path,
+			)
 		else:
 			pass
 		break
@@ -78,7 +87,7 @@ if flag_calc:  # 计算全量数据指标和规则及统计值
 
 	# 数据预处理
 	print('\n全量数据预处理中...\n')
-	data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time)
+	data_prep = data_preprocessing.Data_preprocessing(default_start_time, default_end_time, data_filename = data_filename)
 	df = data_prep.load_data()
 	logging.info(' - 完成数据加载')
 
@@ -148,10 +157,9 @@ print(f' ✓ 已选择的观测时间范围：{start_time} ~ {end_time + datetim
 if not flag_calc:
 	# 数据预处理
 	print('\n数据预处理中...\n')
-	data_prep = data_preprocessing.Data_preprocessing(start_time, end_time)
+	data_prep = data_preprocessing.Data_preprocessing(start_time, end_time, data_filename = data_filename)
 	df = data_prep.load_data()
 	logging.info(' - 完成选定时间区间的数据加载')
-
 
 
 # 根据选定的时间框选数据和指标
@@ -165,9 +173,9 @@ visual_metrics_lst = [
 ]
 df = (
 	df[
-		(df['trade_time'] >= start_time) &
-		(df['trade_time'] <= end_time + datetime.timedelta(days=1)) &
-		(df[visual_metrics_lst].notnull().any(axis=1))
+		(df['trade_time'] >= start_time)
+		& (df['trade_time'] <= end_time + datetime.timedelta(days=1))
+		& (df[visual_metrics_lst].notnull().any(axis=1))
 	]
 	.sort_values('trade_time')
 	.copy()
@@ -190,9 +198,6 @@ if not flag_calc:
 	logging.info(' - 完成选定时间区间的指标计算')
 
 
-
-
-
 # 选择可视化的横坐标时间格式
 while True:
 	date_format = input(' - 请选择可视化的时间格式（date、string）：').strip().replace("'", '')
@@ -212,7 +217,7 @@ print('\n数据可视化中...\n')
 # ① 无其他功能
 # data_visualization.html_subplot(df, dt_obs, dt_breaks, start_time, end_time, type)
 # ③ 添加时间搜索栏：按时间跨度或时间点搜索
-data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type) #, filter_by='point'
+data_visualization.dash_w_filter(df, dt_obs, dt_breaks, start_time, end_time, type)  # , filter_by='point'
 logging.info(' - 完成数据可视化')
 
 
